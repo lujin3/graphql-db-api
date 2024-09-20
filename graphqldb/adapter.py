@@ -275,6 +275,8 @@ class GraphQLAdapter(Adapter):
         bearer_token: Optional[str] = None,
         pagination_relay: Optional[bool] = None,
         list_queries: Optional[List[str]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        cookies: Optional[Dict[str, Any]] = None,
     ):
         super().__init__()
 
@@ -291,41 +293,15 @@ class GraphQLAdapter(Adapter):
 
         self.graphql_api = graphql_api
         self.bearer_token = bearer_token
+        self.headers = headers
+        self.cookies = cookies
 
         if pagination_relay is True and self.is_connection is False:
             raise ValueError("pagination_relay True and is_connection False")
         # For now, default this to True. In the future, we can perhaps guess
         self.pagination_relay = True if pagination_relay is None else pagination_relay
 
-        if self.is_connection:
-            query_type_and_types_query = """{
-  __schema {
-    queryType {
-      fields {
-        name
-        type {
-          name
-        }
-      }
-    }
-    types {
-      name
-      kind
-      fields {
-        name
-        type {
-          name
-          kind
-          ofType {
-            name
-          }
-        }
-      }
-    }
-  }
-}"""
-        else:
-            query_type_and_types_query = """{
+        query_type_and_types_query = """{
   __schema {
     queryType {
       fields {
@@ -381,60 +357,20 @@ class GraphQLAdapter(Adapter):
             t["name"]: t for t in data_types_list if t["name"] is not None
         }
 
-        if self.is_connection:
-            query_return_type_name = type_entry["name"]
-            if query_return_type_name is None:
-                raise ValueError(
-                    f"Unable to resolve query_return_type_name for {self.table}"
-                )
-
-            query_return_fields = data_types[query_return_type_name]["fields"]
-            if query_return_fields is None:
-                raise ValueError("No fields found on query")
-
-            # we are assuming a top level connection
-            edges_type_name = get_edges_type_name(query_return_fields)
-            if edges_type_name is None:
-                raise ValueError("Unable to resolve edges_type_name")
-
-            edges_fields = data_types[edges_type_name]["fields"]
-            if edges_fields is None:
-                raise ValueError("No fields found on edge")
-
-            node_type_name = get_node_type_name(edges_fields)
-            if node_type_name is None:
-                raise ValueError("Unable to resolve node_type_name")
-
+        if type_entry["name"]:
+            query_return_type_name = type_entry["fielnameds"]
+        elif type_entry["ofType"]["name"]:
+            query_return_type_name = type_entry["ofType"]["name"]
         else:
-            # We are assuming it is NonNull of List of NonNull of item
-            list_type = type_entry["ofType"]
-            if list_type is None:
-                raise ValueError("Unable to resolve list_type")
+            raise ValueError(f"Unable to resolve query_return_type_name for {self.table}")
 
-            # TODO(cancan101): put this info into type system
-            list_type = cast(TypeInfo, list_type)
+        query_return_fields = data_types[query_return_type_name]["fields"]
+        if query_return_fields is None:
+            raise ValueError("No fields found on query")
 
-            item_container_type = list_type["ofType"]
-            if item_container_type is None:
-                raise ValueError("Unable to resolve item_container_type")
-
-            # TODO(cancan101): put this info into type system
-            item_container_type = cast(TypeInfo, item_container_type)
-
-            node_type = item_container_type["ofType"]
-            if node_type is None:
-                raise ValueError("Unable to resolve node_type")
-
-            node_type_name = node_type["name"]
-            if node_type_name is None:
-                raise ValueError("Unable to resolve node_type_name")
-
-        node_fields = data_types[node_type_name]["fields"]
-        if node_fields is None:
-            raise ValueError("No fields found on node")
 
         self.columns: Dict[str, Field] = {}
-        for node_field in node_fields:
+        for node_field in query_return_fields:
             self.columns.update(
                 get_type_entries(
                     node_field, data_types=data_types, include=self.include
@@ -476,71 +412,15 @@ class GraphQLAdapter(Adapter):
         return self.columns
 
     def run_query(self, query: str) -> Dict[str, Any]:
-        return run_query(self.graphql_api, query=query, bearer_token=self.bearer_token)
+        return run_query(self.graphql_api, query=query, bearer_token=self.bearer_token, headers=self.headers, cookies=self.cookies)
 
-    def get_data_connection(
+    def get_data(
         self,
         bounds: Dict[str, Filter],
         order: List[Tuple[str, RequestedOrder]],
         **kwargs: Any,
     ) -> Iterator[Dict[str, Any]]:
-        fields_str = get_gql_fields(list(self.columns.keys()))
-        query_args_user = dict(self.query_args)
-
-        after = query_args_user.pop("after", None)
-
-        # We loop for each page in the pagination
-        while True:
-            args = dict(query_args_user)
-            if after is not None:
-                args["after"] = after
-
-            if args:
-                variable_str = f"({_get_variable_argument_str(args)})"
-            else:
-                # Don't generate the () for empty list of args
-                variable_str = ""
-
-            if self.pagination_relay:
-                page_info_str = "pageInfo {endCursor hasNextPage}"
-            else:
-                page_info_str = ""
-
-            query = f"""query {{
-    {self.table}{variable_str}{{
-        edges{{
-        node{{
-            {fields_str}
-        }}
-        }}
-        {page_info_str}
-    }}
-    }}"""
-            query_data = self.run_query(query=query)
-            query_data_connection = query_data[self.table]
-
-            edges = query_data_connection["edges"]
-
-            for edge in edges:
-                node: Dict[str, Any] = edge["node"]
-
-                yield {c: extract_flattened_value(node, c) for c in self.columns.keys()}
-
-            if self.pagination_relay:
-                page_info = query_data_connection["pageInfo"]
-                if not page_info["hasNextPage"]:
-                    break
-                after = page_info["endCursor"]
-            else:
-                # If there is no pagination being used, break immediately
-                break
-
-    def get_data_list(
-        self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
-        **kwargs: Any,
-    ) -> Iterator[Dict[str, Any]]:
+        
         fields_str = get_gql_fields(list(self.columns.keys()))
 
         if self.query_args:
@@ -559,14 +439,3 @@ class GraphQLAdapter(Adapter):
 
         for node in nodes:
             yield {c: extract_flattened_value(node, c) for c in self.columns.keys()}
-
-    def get_data(
-        self,
-        bounds: Dict[str, Filter],
-        order: List[Tuple[str, RequestedOrder]],
-        **kwargs: Any,
-    ) -> Iterator[Dict[str, Any]]:
-        if self.is_connection:
-            return self.get_data_connection(bounds=bounds, order=order, **kwargs)
-        else:
-            return self.get_data_list(bounds=bounds, order=order, **kwargs)

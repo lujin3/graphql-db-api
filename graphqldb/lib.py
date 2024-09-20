@@ -41,14 +41,15 @@ def run_query(
     *,
     query: str,
     bearer_token: Optional[str] = None,
+    headers: Optional[Dict[str, Any]] = None,
+    cookies: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    headers: Dict[str, Any] = {}
     if bearer_token:
         headers["Authorization"] = f"Bearer {bearer_token}"
 
     # TODO(cancan101): figure out timeouts
     resp = requests.post(  # noqa: S113
-        graphql_api, json={"query": query}, headers=headers
+        graphql_api, json={"query": query}, headers=headers, cookies=cookies
     )
     try:
         resp.raise_for_status()

@@ -73,11 +73,18 @@ class APSWGraphQLDialect(APSWDialect):
     ) -> Tuple[Tuple[()], Dict[str, Any]]:
         args, kwargs = super().create_connect_args(url)
 
+        if "adapter_kwargs" in kwargs:
+            headers = kwargs["adapter_kwargs"].get("headers")
+            cookies = kwargs["adapter_kwargs"].get("cookies")
+            kwargs["adapter_kwargs"] = {}
+        else:
+            headers = None
+
         if "adapter_kwargs" in kwargs and kwargs["adapter_kwargs"] != {}:
             raise ValueError(
                 f"Unexpected adapter_kwargs found: {kwargs['adapter_kwargs']}"
             )
-
+        
         graphql_api = self.db_url_to_graphql_api(url)
         bearer_token = self.db_url_to_graphql_bearer(url)
 
@@ -95,6 +102,8 @@ class APSWGraphQLDialect(APSWDialect):
                 "bearer_token": bearer_token,
                 "pagination_relay": pagination_relay,
                 "list_queries": self.list_queries,
+                "headers": headers,
+                "cookies": cookies,
             }
         }
 
