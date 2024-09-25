@@ -17,7 +17,7 @@ engine = create_engine(
     "graphql://127.0.0.1:8082/query?is_https=0", adapter_kwargs=adapter_kwargs
 )
 
-# 构建查询字符串
+# Building the query string
 query_string = urlencode(
     {
         "iarg_startTS": 1725850811000,
@@ -30,11 +30,12 @@ table = f"firefighting?{query_string}"
 query = f"""SELECT ts AS ts,
        sum(value) AS "SUM(value)"
 FROM '{table}'
-WHERE ts >= 1627962437000
+WHERE ts >= '2024-09-01 00:00:00' AND ts < '2024-10-01 00:00:00'
 GROUP BY ts
 ORDER BY "SUM(value)" DESC
-LIMIT 1
+LIMIT 2
 OFFSET 0"""
+
 
 with engine.connect() as connection:
     for row in connection.execute(text(query)):

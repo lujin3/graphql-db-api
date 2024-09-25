@@ -112,3 +112,4 @@ Copy the [db_engine_spec for graphql](https://github.com/lujin3/graphql-db-api/b
 - [x] Superset TimeGrain conversion support
 - [x] Conversion of ts column to datetime type
 - [x] Timeout support (default 300s)
+- [x] Timestamp type support  
