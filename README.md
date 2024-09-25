@@ -88,8 +88,8 @@ In order to use with Superset
     pip install git+https://github.com/lujin3/graphql-db-api
     ```  
 
-2. Add the [`db_engine_spec for graphql`](https://github.com/lujin3/graphql-db-api/blob/main/graphqldb/graphql.py) for graphql to Superset:  
-Copy the [`db_engine_spec for graphql`](https://github.com/lujin3/graphql-db-api/blob/main/graphqldb/graphql.py) to the  [`superset db_engine_spec`](https://github.com/apache/superset/tree/master/superset/db_engine_specs) directory.
+2. Add the [db_engine_spec for graphql](https://github.com/lujin3/graphql-db-api/blob/main/graphqldb/graphql.py) for graphql to Superset:  
+Copy the [db_engine_spec for graphql](https://github.com/lujin3/graphql-db-api/blob/main/graphqldb/graphql.py) to the  [superset db_engine_spec](https://github.com/apache/superset/tree/master/superset/db_engine_specs) directory.
 
 3. Use the `graphql` protocol in the SQLAlchemy URI like: `graphql://127.0.0.1:8082/query?is_https=0`  
 
