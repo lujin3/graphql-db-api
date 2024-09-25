@@ -2,17 +2,15 @@
 
 A Python DB API 2.0 for Advantech APPs GraphQL APIs
 
-This module allows you to query GraphQL APIs using SQL.
-
-适配 superset 的 GraphQL DB 数据源
+This module allows querying GraphQL APIs using SQL and is compatible with Superset for GraphQL DB data sources.
 
 ## GraphQL API Examples  
 
-请参考 [graphql-db-api-example](https://github.com/lujin3/graphql-db-api-example) 项目
+For detailed examples, see the [graphql-db-api-example](https://github.com/lujin3/graphql-db-api-example) project.
 
 ## Installation
 
-```python
+```bash
 pip install git+https://github.com/lujin3/graphql-db-api
 ```
 
@@ -55,7 +53,7 @@ engine = create_engine(
     "graphql://127.0.0.1:8082/query?is_https=0", adapter_kwargs=adapter_kwargs
 )
 
-# 构建查询字符串
+# Building the query string
 query_string = urlencode(
     {
         "iarg_startTS": 1725850811000,
@@ -84,15 +82,16 @@ with engine.connect() as connection:
 
 In order to use with Superset
 
-1. install this package  
+1. install the package  
 
     ```python
     pip install git+https://github.com/lujin3/graphql-db-api
     ```  
 
-2. install a [`db_engine_spec`](https://github.com/lujin3/graphql-db-api/blob/main/graphqldb/db_engine_specs.py) so Superset should recognize the driver.
+2. Add the [`db_engine_spec for graphql`](https://github.com/lujin3/graphql-db-api/blob/main/graphqldb/graphql.py) for graphql to Superset:  
+Copy the [`db_engine_spec for graphql`](https://github.com/lujin3/graphql-db-api/blob/main/graphqldb/graphql.py) to the  [`superset db_engine_spec`](https://github.com/apache/superset/tree/master/superset/db_engine_specs) directory.
 
-3. then use the `graphql` protocol in the SQLAlchemy URI like: `graphql://127.0.0.1:8082/query?is_https=0`  
+3. Use the `graphql` protocol in the SQLAlchemy URI like: `graphql://127.0.0.1:8082/query?is_https=0`  
 
     ![asuperset-SQLAlchemya](./superset-SQLAlchemy.png)
 
@@ -108,8 +107,8 @@ In order to use with Superset
 - [ ] Filtering
 - [ ] Sorting
 - [x] Relay Pagination
-- [x] 支持 headers(X-Ifp-Tenant-Id, token) 鉴权
-- [x] 支持 cookies(TSTenant, EIToken) 鉴权
-- [x] 支持 Superset TimeGrain 时间转换
-- [x] 支持 ts 列转换为 datetime 类型
-- [x] 支持 Timeout(默认 300s)
+- [x] Authentication via headers (X-Ifp-Tenant-Id, token)
+- [x] Authentication via cookies (TSTenant, EIToken)
+- [x] Superset TimeGrain conversion support
+- [x] Conversion of ts column to datetime type
+- [x] Timeout support (default 300s)
