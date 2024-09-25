@@ -362,12 +362,13 @@ class GraphQLAdapter(Adapter):
         elif type_entry["ofType"]["name"]:
             query_return_type_name = type_entry["ofType"]["name"]
         else:
-            raise ValueError(f"Unable to resolve query_return_type_name for {self.table}")
+            raise ValueError(
+                f"Unable to resolve query_return_type_name for {self.table}"
+            )
 
         query_return_fields = data_types[query_return_type_name]["fields"]
         if query_return_fields is None:
             raise ValueError("No fields found on query")
-
 
         self.columns: Dict[str, Field] = {}
         for node_field in query_return_fields:
@@ -412,7 +413,13 @@ class GraphQLAdapter(Adapter):
         return self.columns
 
     def run_query(self, query: str) -> Dict[str, Any]:
-        return run_query(self.graphql_api, query=query, bearer_token=self.bearer_token, headers=self.headers, cookies=self.cookies)
+        return run_query(
+            self.graphql_api,
+            query=query,
+            bearer_token=self.bearer_token,
+            headers=self.headers,
+            cookies=self.cookies,
+        )
 
     def get_data(
         self,
@@ -420,7 +427,7 @@ class GraphQLAdapter(Adapter):
         order: List[Tuple[str, RequestedOrder]],
         **kwargs: Any,
     ) -> Iterator[Dict[str, Any]]:
-        
+
         fields_str = get_gql_fields(list(self.columns.keys()))
 
         if self.query_args:

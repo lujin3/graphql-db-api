@@ -1,10 +1,11 @@
-# Taken from: https://github.com/apache/superset/blob/master/superset/db_engine_specs/gsheets.py  # noqa: E501
 from superset.db_engine_specs.sqlite import SqliteEngineSpec
 from superset.constants import TimeGrain
 from typing import Any
 import json
 import logging
 from flask import request
+from sqlalchemy.engine.reflection import Inspector
+from superset.superset_typing import ResultSetColumnType
 
 logger = logging.getLogger()
 
@@ -70,3 +71,20 @@ class GraphQLEngineSpec(SqliteEngineSpec):
 
 
         return data
+    
+    @classmethod
+    def get_columns(
+        cls,
+        inspector: Inspector,
+        table_name: str,
+        schema: str | None,
+        options: dict[str, Any] | None = None,
+    ) -> list[ResultSetColumnType]:
+        """
+        将 ts 列转换为 datetime 类型
+        """
+        base_cols = super().get_columns(inspector, table_name, schema, options)
+        for col in base_cols:
+            if col["column_name"] == "ts":
+                col["type"] = "TIMESTAMP"
+        return base_cols

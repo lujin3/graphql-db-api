@@ -84,7 +84,7 @@ class APSWGraphQLDialect(APSWDialect):
             raise ValueError(
                 f"Unexpected adapter_kwargs found: {kwargs['adapter_kwargs']}"
             )
-        
+
         graphql_api = self.db_url_to_graphql_api(url)
         bearer_token = self.db_url_to_graphql_bearer(url)
 

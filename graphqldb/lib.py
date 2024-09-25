@@ -43,25 +43,41 @@ def run_query(
     bearer_token: Optional[str] = None,
     headers: Optional[Dict[str, Any]] = None,
     cookies: Optional[Dict[str, Any]] = None,
+    timeout: int = 300,  # 设置超时时间
 ) -> Dict[str, Any]:
     if bearer_token:
         headers["Authorization"] = f"Bearer {bearer_token}"
 
-    # TODO(cancan101): figure out timeouts
-    resp = requests.post(  # noqa: S113
-        graphql_api, json={"query": query}, headers=headers, cookies=cookies
-    )
+
+    # 打印请求的详细内容
+    print(f"""
+----- Request Details -----
+URL     : {graphql_api}
+Headers : {headers}
+Cookies : {cookies}
+Query   : {query}
+""")
+
     try:
+        # 发起 POST 请求，并设置超时
+        resp = requests.post(
+            graphql_api, json={"query": query}, headers=headers, cookies=cookies, timeout=timeout
+        )
+        # 检查是否有 HTTP 错误
         resp.raise_for_status()
-    except requests.HTTPError as ex:
-        # For now let's assume 400 will have errors
-        # https://github.com/graphql/graphql-over-http/blob/main/spec/GraphQLOverHTTP.md#status-codes
-        if ex.response.status_code != 400:
-            raise
+
+    except requests.Timeout:
+        print(f"Request timed out: {timeout}s")
+        raise
+    except requests.RequestException as ex:
+        print(f"An error occurred: {ex}")
+        raise
 
     resp_data = resp.json()
 
+    # 检查 GraphQL 响应中是否有 errors
     if "errors" in resp_data:
+        print(f"GraphQL Errors: {resp_data['errors']}")
         raise ValueError(resp_data["errors"])
 
     return resp_data["data"]
