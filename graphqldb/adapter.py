@@ -27,10 +27,14 @@ from shillelagh.fields import (
     ISODateTime,
     ISOTime,
     String,
+    DateTime,
 )
+
+from shillelagh.fields import Field
+
 from shillelagh.typing import RequestedOrder
 
-from .lib import get_last_query, run_query
+from .lib import get_last_query, run_query, convert_timestamp_to_datetime
 
 # -----------------------------------------------------------------------------
 
@@ -84,6 +88,8 @@ def parse_gql_type(type_info: TypeInfo) -> Field:
     elif name == "Time":
         # https://www.graphql-scalars.dev/docs/scalars/time
         return ISOTime()
+    elif name == "Timestamp":
+        return DateTime()
     else:
         # TODO(cancan101): how do we want to handle other scalars?
         raise ValueError(f"Unknown type: {name}")
@@ -262,7 +268,6 @@ def _get_variable_argument_str(args: Dict[str, QueryArg]) -> str:
 
 class GraphQLAdapter(Adapter):
     safe = True
-
     is_connection: bool
 
     def __init__(
@@ -427,7 +432,6 @@ class GraphQLAdapter(Adapter):
         order: List[Tuple[str, RequestedOrder]],
         **kwargs: Any,
     ) -> Iterator[Dict[str, Any]]:
-
         fields_str = get_gql_fields(list(self.columns.keys()))
 
         if self.query_args:
@@ -445,4 +449,8 @@ class GraphQLAdapter(Adapter):
         nodes: List[Dict[str, Any]] = query_data[self.table]
 
         for node in nodes:
+            ts_value = node.get("ts")
+            if ts_value:
+                node["ts"] = convert_timestamp_to_datetime(ts_value)
+
             yield {c: extract_flattened_value(node, c) for c in self.columns.keys()}

@@ -4,6 +4,7 @@ import urllib.parse
 from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Union
 
 import requests
+import datetime
 
 if TYPE_CHECKING:
     from sqlalchemy.engine.url import URL
@@ -81,3 +82,22 @@ Query   : {query}
         raise ValueError(resp_data["errors"])
 
     return resp_data["data"]
+
+
+def convert_timestamp_to_datetime(timestamp):
+    """
+    将秒级或毫秒级时间戳转换为人类可读的日期时间格式。
+    
+    :param timestamp: 秒级或毫秒级时间戳
+    :return: 可读的日期时间字符串
+    """
+    # 判断时间戳是秒级还是毫秒级
+    if len(str(timestamp)) == 13:  # 如果是13位，则为毫秒级
+        # 将毫秒级时间戳转换为秒级时间戳
+        timestamp = timestamp / 1000
+    
+    # 转换为 datetime 对象
+    dt_obj = datetime.datetime.fromtimestamp(timestamp)
+    return dt_obj
+    # 格式化为字符串
+    # return dt_obj.strftime('%Y-%m-%d %H:%M:%S')
