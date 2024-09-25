@@ -11,7 +11,7 @@ This module allows you to query GraphQL APIs using SQL.
 
 ## Installation
 
-`pip install git+https://github.com/lujin3/graphql-db-api.git`
+`pip install git+https://github.com/lujin3/graphql-db-api`
 
 ## SQLAlchemy support
 

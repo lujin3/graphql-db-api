@@ -8,8 +8,9 @@ from setuptools import Command, find_packages, setup
 
 # -----------------------------------------------------------------------------
 
-DESCRIPTION = "Python DB-API and SQLAlchemy interface for GraphQL APIs."
-VERSION = "0.0.1.dev5"
+DESCRIPTION = "Python DB-API and SQLAlchemy interface for Advantech APPs GraphQL APIs."
+
+VERSION = "0.0.2"
 
 # -----------------------------------------------------------------------------
 
@@ -97,9 +98,8 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type=long_description_content_type,
-    author="Alex Rothberg",
-    author_email="agrothberg@gmail.com",
-    url="https://github.com/cancan101/graphql-db-api",
+    author="Lu Jin",
+    url="https://github.com/lujin3/graphql-db-api",
     packages=find_packages(exclude=("tests",)),
     entry_points={
         "sqlalchemy.dialects": [
