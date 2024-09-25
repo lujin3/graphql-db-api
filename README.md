@@ -4,10 +4,17 @@ A Python DB API 2.0 for Advantech APPs GraphQL APIs
 
 This module allows you to query GraphQL APIs using SQL.
 
+适配 superset 的 GraphQL DB 数据源
+
 ## 新增  
 
 1. 支持 cookies, 获取 TSTenant EIToken 传入 GraphQL API
-2. 支持修改支持 superset 的 TimeGrain，时间转换
+2. 支持修改支持 superset 的 TimeGrain 时间转换
+3. 将 ts 列转换为 datetime 类型
+
+## GraphQL API Examples  
+
+请参考 [graphql-db-api-example](https://github.com/lujin3/graphql-db-api-example) 项目
 
 ## Installation
 
