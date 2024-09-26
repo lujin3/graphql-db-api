@@ -30,9 +30,9 @@ from shillelagh.fields import (
     DateTime,
 )
 
-from shillelagh.fields import Field
+from shillelagh.fields import Field, RowID
 
-from shillelagh.typing import RequestedOrder
+from shillelagh.typing import RequestedOrder, Row
 
 from .lib import get_last_query, run_query, convert_timestamp_to_datetime
 
@@ -449,8 +449,29 @@ class GraphQLAdapter(Adapter):
         nodes: List[Dict[str, Any]] = query_data[self.table]
 
         for node in nodes:
-            ts_value = node.get("ts")
-            if ts_value:
-                node["ts"] = convert_timestamp_to_datetime(ts_value)
-
             yield {c: extract_flattened_value(node, c) for c in self.columns.keys()}
+
+
+    def get_rows(
+        self,
+        bounds: Dict[str, Filter],
+        order: List[Tuple[str, RequestedOrder]],
+        **kwargs: Any,
+    ) -> Iterator[Row]:
+        """
+        Yield rows as native Python types.
+        """
+        columns = self.get_columns()
+        parsers = {column_name: field.parse for column_name, field in columns.items()}
+        parsers["rowid"] = RowID().parse
+
+        # 提前计算需要时间戳转换的列
+        ts_rows = {column_name for column_name, field in columns.items() if field.type == "TIMESTAMP"}
+
+        for row in self.get_data(bounds, order, **kwargs):
+
+            yield {
+                column_name: parsers[column_name](convert_timestamp_to_datetime(value) if column_name in ts_rows else value)
+                for column_name, value in row.items()
+                if column_name in parsers
+            }
