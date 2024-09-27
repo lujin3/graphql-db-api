@@ -311,6 +311,9 @@ class GraphQLAdapter(Adapter):
     queryType {
       fields {
         name
+        args {
+          name
+        }
         type {
           name
           kind
@@ -347,10 +350,8 @@ class GraphQLAdapter(Adapter):
 
         query_type_and_types = self.run_query(query=query_type_and_types_query)
         query_type_and_types_schema = query_type_and_types["__schema"]
-        queries_return_fields: List[FieldInfo] = query_type_and_types_schema[
-            "queryType"
-        ]["fields"]
-
+        queries_return_fields: List[FieldInfo] = query_type_and_types_schema["queryType"]["fields"]
+        
         # find the matching query (a field on the query object)
         # TODO(cancan101): handle missing
         type_entry = find_type_by_name(self.table, types=queries_return_fields)
@@ -363,7 +364,7 @@ class GraphQLAdapter(Adapter):
         }
 
         if type_entry["name"]:
-            query_return_type_name = type_entry["fielnameds"]
+            query_return_type_name = type_entry["name"]
         elif type_entry["ofType"]["name"]:
             query_return_type_name = type_entry["ofType"]["name"]
         else:
@@ -382,6 +383,10 @@ class GraphQLAdapter(Adapter):
                     node_field, data_types=data_types, include=self.include
                 )
             )
+
+        self.args = next((f["args"] for f in queries_return_fields if f["name"] == self.table), [])
+        valid_arg_names = {arg["name"] for arg in self.args}
+        self.query_args = {k: v for k, v in self.query_args.items() if k in valid_arg_names}
 
     @staticmethod
     def supports(uri: str, fast: bool = True, **kwargs: Any) -> Optional[bool]:
