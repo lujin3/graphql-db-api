@@ -38,7 +38,7 @@ class GraphQLEngineSpec(SqliteEngineSpec):
                 "TSTenant": request.cookies.get('TSTenant'),
                 "EIToken": request.cookies.get('EIToken')
             }
-        # params["adapter_kwargs"] = {'cookies': cookies}
+
         adapter_kwargs = {"cookies": cookies}
         engine_params = {"adapter_kwargs": adapter_kwargs}
         extra["engine_params"]= engine_params
